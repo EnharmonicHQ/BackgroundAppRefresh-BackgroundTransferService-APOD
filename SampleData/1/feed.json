@@ -1,0 +1,12 @@
+{
+  "image": {
+    "url": "http://apod.nasa.gov/apod/image/1510/tle_dierickD8D_1002ozoneC.jpg",
+    "explanation": "This sharp telescopic snapshot caught late September's Harvest Moon completely immersed in Earth's dark umbral shadow, at the beginning of a total lunar eclipse. It was the final eclipse in a tetrad, a string of four consecutive total lunar eclipses. A dark apparition of the Full Moon near perigee, this total eclipse's color was a deep blood red, the lunar surface reflecting light within Earth's shadow filtered through the lower atmosphere. Seen from a lunar perspective, the reddened light comes from all the sunsets and sunrises around the edges of a silhouetted Earth. But close to the shadow's edge, the limb of the eclipsed Moon shows a distinct blue hue. The blue eclipsed moonlight is still filtered through Earth's atmosphere though, originating as rays of sunlight pass through layers high in the upper stratosphere, colored by ozone that scatters red light and transmits blue.",
+    "title": "A Blue Blood Moon"
+  },
+  "video": {
+    "title": "Aurora Australis over the Ocean",
+    "explanation": "This video was taken by the crew of Expedition 43 on board the International Space Station. The sequence of shots was taken on March 17, 2015 from 17:05:55 to 17:13:13 GMT, on a pass over the Indian Ocean at night. This video shows the Aurora Australis, the aurora lights over the South Pole, over the Indian Ocean behind the space station.",
+    "url": "http://earth.jsc.nasa.gov/BeyondThePhotography/CrewEarthObservationsVideos/videos/australisIndian_iss_20150317/australisIndian_iss_20150317HD.mp4"
+  }
+}

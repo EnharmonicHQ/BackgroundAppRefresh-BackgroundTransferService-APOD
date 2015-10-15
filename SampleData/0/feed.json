@@ -1,0 +1,12 @@
+{
+  "image": {
+    "url": "http://apod.nasa.gov/apod/image/1510/Trifid_HubbleGendler_960.jpg",
+    "explanation": "Clouds of glowing gas mingle with dust lanes in the Trifid Nebula, a star forming region toward the constellation of the Archer (Sagittarius).  In the center, the three prominent dust lanes that give the Trifid its name all come together. Mountains of opaque dust appear on the right, while other dark filaments of dust are visible threaded throughout the nebula.  A single massive star visible near the center causes much of the Trifid's glow.  The Trifid, also known as M20, is only about 300,000 years old, making it among the youngest emission nebulae known.  The nebula lies about 9,000 light years away and the part pictured here spans about 10 light years.  The above image is a composite with luminance taken from an image by the 8.2-m ground-based Subaru Telescope, detail provided by the 2.4-m orbiting Hubble Space Telescope, color data provided by Martin Pugh and image assembly and processing provided by Robert Gendler.   Follow APOD on: Facebook,  Google Plus, or Twitter",
+    "title": "In the Center of the Trifid Nebula"
+  },
+  "video": {
+    "url": "http://earth.jsc.nasa.gov/BeyondThePhotography/CrewEarthObservationsVideos/videos/pacificcupola_iss_20120331/pacificcupola_iss_20120331HD_web.mp4",
+    "explanation": "This video was taken by the crew of Expedition 30 on board the International Space Station. The sequence of shots was taken March 31, 2012 from 06:27:11 to 06:48:15 GMT, on a pass from the South Pacific Ocean, east of Australia, to southwestern New Mexico. This video is primarily focused on the Pacific Ocean through the Cupola window. As the ISS travels over the ocean, the lights from the islands of Hawaii stand out against the blue water. The pass continues southeast towards northwestern Central America and southwestern United States and ends looking at city lights over this region.",
+    "title": "The Pacific Ocean Through the Cupola"
+  }
+}
