@@ -258,16 +258,6 @@ didCompleteWithError:(NSError *)error
     return cachedImageURL;
 }
 
-+(NSURL *)cachedVideoURLDestination
-{
-    NSURL *cachedVideoURL = nil;
-    
-    NSURL *applicationSupportDirectoryURL = [self.class applicationSupportDirectoryURL];
-    cachedVideoURL = [applicationSupportDirectoryURL URLByAppendingPathComponent:@"video.mov"];
-    
-    return cachedVideoURL;
-}
-
 +(NSURL *)applicationSupportDirectoryURL
 {
     static NSURL *applicationSupportDirectoryURL = nil;
