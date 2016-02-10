@@ -83,6 +83,32 @@
                                            taskDescription:(NSString *)taskDescription
                                                   userInfo:(NSDictionary *)userInfo;
 
+/**
+ *  Resumes a download task in the foreground.
+ *
+ *  @param resumeData      `NSData` blob used to resume a download task.
+ *  @param taskDescription A descriptive label for the task.
+ *  @param userInfo        A `NSDictionary` object that conforms to the `NSCoding` protocol. This dictionary is useful for supplying context data with
+ *
+ *  @return a `NSURLSessionDownloadTask` that represents a download to local storage.
+ */
+- (NSURLSessionDownloadTask *)downloadFileWithResumeData:(NSData *)resumeData
+                                         taskDescription:(NSString *)taskDescription
+                                                userInfo:(NSDictionary *)userInfo;
+
+/**
+ *  Resumes a download task in the background.
+ *
+ *  @param resumeData      `NSData` blob used to resume a download task.
+ *  @param taskDescription A descriptive label for the task.
+ *  @param userInfo        A `NSDictionary` object that conforms to the `NSCoding` protocol. This dictionary is useful for supplying context data with
+ *
+ *  @return a `NSURLSessionDownloadTask` that represents a download to local storage.
+ */
+- (NSURLSessionDownloadTask *)backgroundDownloadFileWithResumeData:(NSData *)resumeData
+                                                   taskDescription:(NSString *)taskDescription
+                                                          userInfo:(NSDictionary *)userInfo;
+
 #pragma mark - Background Transfer Service
 
 /**
@@ -140,6 +166,20 @@ didCompleteWithError:(NSError *)error
       didWriteData:(int64_t)bytesWritten
  totalBytesWritten:(int64_t)totalBytesWritten
 totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+           userInfo:(NSDictionary *)userInfo;
+
+/**
+ *  Notifies the delegate when a download resumes.
+ *
+ *  @param dataFetcher        The calling `ENHDataFetcher`.
+ *  @param downloadTask       A descriptive label for the task.
+ *  @param fileOffset         The byte position where the download begins resuming from.
+ *  @param expectedTotalBytes The total number of bytes expected.
+ */
+- (void)dataFetcher:(ENHDataFetcher *)dataFetcher
+       downloadTask:(NSURLSessionDownloadTask *)downloadTask
+  didResumeAtOffset:(int64_t)fileOffset
+ expectedTotalBytes:(int64_t)expectedTotalBytes
            userInfo:(NSDictionary *)userInfo;
 
 @end

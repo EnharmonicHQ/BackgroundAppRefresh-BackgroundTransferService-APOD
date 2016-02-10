@@ -216,10 +216,47 @@ static NSString * const kENHDataFetcherUserInfoKey = @"kENHDataFetcherUserInfoKe
     return downloadTask;
 }
 
+- (NSURLSessionDownloadTask *)downloadFileWithResumeData:(NSData *)resumeData
+                                         taskDescription:(NSString *)taskDescription
+                                                userInfo:(NSDictionary *)userInfo
+{
+    return [self downloadTaskWithResumeData:resumeData
+                            taskDescription:taskDescription
+                                   userInfo:userInfo
+               useBackgroundTransferService:NO];
+}
+
+- (NSURLSessionDownloadTask *)backgroundDownloadFileWithResumeData:(NSData *)resumeData
+                                         taskDescription:(NSString *)taskDescription
+                                                userInfo:(NSDictionary *)userInfo
+{
+    return [self downloadTaskWithResumeData:resumeData
+                            taskDescription:taskDescription
+                                   userInfo:userInfo
+               useBackgroundTransferService:YES];
+}
+
+- (NSURLSessionDownloadTask *)downloadTaskWithResumeData:(NSData *)resumeData
+                                         taskDescription:(NSString *)taskDescription
+                                                userInfo:(NSDictionary *)userInfo
+                            useBackgroundTransferService:(BOOL)useBackgroundTransferService
+{
+    NSURLSession *session = useBackgroundTransferService ? [self backgroundURLSession] : [self foregroundURLSession];
+    
+    NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithResumeData:resumeData];
+    [downloadTask setTaskDescription:taskDescription];
+    
+    NSAssert([session delegate] == self, @"self should be the delegate");
+    
+    [downloadTask resume];
+    
+    return downloadTask;
+}
+
 #pragma mark - NSURLSessionDownloadDelegate
 
--(void)URLSession:(NSURLSession *)session
-     downloadTask:(NSURLSessionDownloadTask *)downloadTask
+- (void)URLSession:(NSURLSession *)session
+      downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didFinishDownloadingToURL:(NSURL *)location
 {
     NSParameterAssert([self delegate]);
@@ -268,6 +305,27 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
                           userInfo:userInfo];
     }
 }
+
+- (void)URLSession:(NSURLSession *)session
+      downloadTask:(NSURLSessionDownloadTask *)downloadTask
+ didResumeAtOffset:(int64_t)fileOffset
+expectedTotalBytes:(int64_t)expectedTotalBytes
+{
+    NSParameterAssert([self delegate]);
+    
+    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didResumeAtOffset:expectedTotalBytes:userInfo:)])
+    {
+        NSDictionary *userInfo = [NSURLProtocol propertyForKey:kENHDataFetcherUserInfoKey
+                                                     inRequest:downloadTask.originalRequest];
+        
+        [self.delegate dataFetcher:self
+                      downloadTask:downloadTask
+                 didResumeAtOffset:fileOffset
+                expectedTotalBytes:expectedTotalBytes
+                          userInfo:userInfo];
+    }
+}
+
 
 #pragma mark - Background Transfer Service
 
