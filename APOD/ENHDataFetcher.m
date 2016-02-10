@@ -5,8 +5,11 @@
 //  Created by Dillan Laughlin on 10/8/15.
 //  Copyright © 2015 Enharmonic inc. All rights reserved.
 //
+//  Storing info via NSURLProtocol inspired by: https://gist.github.com/dtorres/46780d9db0af4cea1c57
 
 #import "ENHDataFetcher.h"
+
+static NSString * const kENHDataFetcherUserInfoKey = @"kENHDataFetcherUserInfoKey";
 
 @interface ENHDataFetcher () <NSURLSessionDownloadDelegate>
 
@@ -177,26 +180,36 @@
 }
 
 -(NSURLSessionDownloadTask * )downloadFileFromURL:(NSURL *)fileURL
-                 taskDescription:(NSString *)taskDescription
+                                  taskDescription:(NSString *)taskDescription
+                                         userInfo:(NSDictionary *)userInfo
 {
-    return [self downloadFileFromURL:fileURL taskDescription:taskDescription useBackgroundTransferService:NO];
+    return [self downloadFileFromURL:fileURL taskDescription:taskDescription userInfo:userInfo useBackgroundTransferService:NO];
 }
 
 -(NSURLSessionDownloadTask *)backgroundDownloadFileFromURL:(NSURL *)fileURL
-                     taskDescription:(NSString *)taskDescription
+                                           taskDescription:(NSString *)taskDescription
+                                                  userInfo:(NSDictionary *)userInfo
 {
-    return [self downloadFileFromURL:fileURL taskDescription:taskDescription useBackgroundTransferService:YES];
+    return [self downloadFileFromURL:fileURL taskDescription:taskDescription userInfo:userInfo useBackgroundTransferService:YES];
 }
 
 -(NSURLSessionDownloadTask *)downloadFileFromURL:(NSURL *)fileURL
-                 taskDescription:(NSString *)taskDescription
-    useBackgroundTransferService:(BOOL)useBackgroundTransferService
+                                 taskDescription:(NSString *)taskDescription
+                                        userInfo:(NSDictionary *)userInfo
+                    useBackgroundTransferService:(BOOL)useBackgroundTransferService
 {
     NSURLSession *session = useBackgroundTransferService ? [self backgroundURLSession] : [self foregroundURLSession];
-    NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:fileURL];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:fileURL];
+    if (userInfo)
+    {
+        [NSURLProtocol setProperty:userInfo forKey:kENHDataFetcherUserInfoKey inRequest:request];
+    }
+    
+    NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request];
     [downloadTask setTaskDescription:taskDescription];
     
-    NSAssert([session delegate] == self, @"Self should be the delegate");
+    NSAssert([session delegate] == self, @"self should be the delegate");
     
     [downloadTask resume];
     
@@ -211,9 +224,11 @@ didFinishDownloadingToURL:(NSURL *)location
 {
     NSParameterAssert([self delegate]);
     
-    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didFinishDownloadingToURL:)])
+    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didFinishDownloadingToURL:userInfo:)])
     {
-        [self.delegate dataFetcher:self downloadTask:downloadTask didFinishDownloadingToURL:location];
+        NSDictionary *userInfo = [NSURLProtocol propertyForKey:kENHDataFetcherUserInfoKey
+                                                     inRequest:downloadTask.originalRequest];
+        [self.delegate dataFetcher:self downloadTask:downloadTask didFinishDownloadingToURL:location userInfo:userInfo];
     }
 }
 
@@ -223,9 +238,34 @@ didCompleteWithError:(NSError *)error
 {
     NSParameterAssert([self delegate]);
     
-    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didCompleteWithError:)])
+    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didCompleteWithError:userInfo:)])
     {
-        [self.delegate dataFetcher:self downloadTask:(NSURLSessionDownloadTask *)task didCompleteWithError:error];
+        NSDictionary *userInfo = [NSURLProtocol propertyForKey:kENHDataFetcherUserInfoKey
+                                                     inRequest:task.originalRequest];
+        
+        [self.delegate dataFetcher:self downloadTask:(NSURLSessionDownloadTask *)task didCompleteWithError:error userInfo:userInfo];
+    }
+}
+
+- (void)URLSession:(NSURLSession *)session
+      downloadTask:(NSURLSessionDownloadTask *)downloadTask
+      didWriteData:(int64_t)bytesWritten
+ totalBytesWritten:(int64_t)totalBytesWritten
+totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+{
+    NSParameterAssert([self delegate]);
+    
+    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:userInfo:)])
+    {
+        NSDictionary *userInfo = [NSURLProtocol propertyForKey:kENHDataFetcherUserInfoKey
+                                                     inRequest:downloadTask.originalRequest];
+        
+        [self.delegate dataFetcher:self
+                      downloadTask:downloadTask
+                      didWriteData:bytesWritten
+                 totalBytesWritten:totalBytesWritten
+         totalBytesExpectedToWrite:totalBytesExpectedToWrite
+                          userInfo:userInfo];
     }
 }
 

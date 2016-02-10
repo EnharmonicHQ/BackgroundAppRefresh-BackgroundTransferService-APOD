@@ -164,7 +164,8 @@
                                    APODAsset *videoAsset = [[APODAsset alloc] initWithDictionary:videoDictionary];
                                    [weakSelf setCachedVideoAsset:videoAsset];
                                    [self.dataFetcher backgroundDownloadFileFromURL:videoAsset.assetURL
-                                                                   taskDescription:videoAsset.title];
+                                                                   taskDescription:videoAsset.title
+                                                                          userInfo:nil];
                                }
                                else
                                {
@@ -186,6 +187,7 @@
 -(void)dataFetcher:(ENHDataFetcher *)dataFetcher
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didFinishDownloadingToURL:(NSURL *)location
+          userInfo:(NSDictionary *)userInfo
 {
     NSURL *expectedRemoteURL = [self.cachedVideoAsset assetURL];
     if ([downloadTask.originalRequest.URL isEqual:expectedRemoteURL])
@@ -208,6 +210,7 @@ didFinishDownloadingToURL:(NSURL *)location
 -(void)dataFetcher:(ENHDataFetcher *)dataFetcher
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didCompleteWithError:(NSError *)error
+userInfo:(NSDictionary *)userInfo
 {
     if (error)
     {
