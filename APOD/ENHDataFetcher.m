@@ -1,11 +1,12 @@
 //
-//  APODDataFetcher.m
+//  ENHDataFetcher.m
 //  APOD
 //
 //  Created by Dillan Laughlin on 10/8/15.
 //  Copyright © 2015 Enharmonic inc. All rights reserved.
 //
 //  Storing info via NSURLProtocol inspired by: https://gist.github.com/dtorres/46780d9db0af4cea1c57
+//  Exponential moving average troughput inspired by: http://stackoverflow.com/questions/2779600/how-to-estimate-download-time-remaining-accurately
 //
 //  The MIT License (MIT)
 //
@@ -30,6 +31,11 @@
 #import "ENHDataFetcher.h"
 
 static NSString * const kENHDataFetcherUserInfoKey = @"kENHDataFetcherUserInfoKey";
+static NSString * const kENHDataFetcherInitialTimestampKey = @"kENHDataFetcherInitialTimestampKey";
+static NSString * const kENHDataFetcherLastTimestampKey = @"kENHDataFetcherLastTimestampKey";
+static NSString * const kENHDataFetcherAverageThroughputKey = @"kENHDataFetcherAverageThroughputKey";
+
+static const double kENHDataFetcherMovingAverageThroughputSmothingFactor = 0.005;
 
 @interface ENHDataFetcher () <NSURLSessionDownloadDelegate>
 
@@ -226,6 +232,10 @@ static NSString * const kENHDataFetcherUserInfoKey = @"kENHDataFetcherUserInfoKe
         [NSURLProtocol setProperty:userInfo forKey:kENHDataFetcherUserInfoKey inRequest:request];
     }
     
+    NSDate *timestamp = [NSDate date];
+    [NSURLProtocol setProperty:timestamp forKey:kENHDataFetcherInitialTimestampKey inRequest:request];
+    [NSURLProtocol setProperty:timestamp forKey:kENHDataFetcherLastTimestampKey inRequest:request];
+    
     NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request];
     [downloadTask setTaskDescription:taskDescription];
     
@@ -312,7 +322,38 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
 {
     NSParameterAssert([self delegate]);
     
-    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:userInfo:)])
+    uint64_t currentAverageThroughput = 0;
+    
+    NSURLRequest *request = [downloadTask originalRequest];
+    
+    NSDate *timestamp = [NSDate date];
+    NSDate *initialTimestamp = [NSURLProtocol propertyForKey:kENHDataFetcherInitialTimestampKey inRequest:request];
+    if (initialTimestamp)
+    {
+        NSTimeInterval requestLifetimeInterval = [timestamp timeIntervalSinceDate:initialTimestamp];
+        currentAverageThroughput = (uint64_t)((double)totalBytesWritten / requestLifetimeInterval); // Average over the lifetime of the request.
+    }
+    
+    NSDate *lastTimestamp = [NSURLProtocol propertyForKey:kENHDataFetcherLastTimestampKey inRequest:request];
+    if (lastTimestamp && [request isKindOfClass:NSMutableURLRequest.class]) // Can use a moving average.
+    {
+        NSMutableURLRequest *mutableRequest = (NSMutableURLRequest *)request;
+        
+        NSTimeInterval currentInterval = [timestamp timeIntervalSinceDate:lastTimestamp];
+        double currentThroughput = (double)bytesWritten / currentInterval;
+        double currentMovingAverageThroughput = currentThroughput;
+        NSNumber *previousAverageThrouputValue = [NSURLProtocol propertyForKey:kENHDataFetcherAverageThroughputKey inRequest:request];
+        if (previousAverageThrouputValue)
+        {
+            currentMovingAverageThroughput = kENHDataFetcherMovingAverageThroughputSmothingFactor * currentThroughput + (1 - kENHDataFetcherMovingAverageThroughputSmothingFactor) * [previousAverageThrouputValue doubleValue];
+            currentAverageThroughput = (uint64_t)currentMovingAverageThroughput; // Exponential moving average throughput.
+        }
+        
+        [NSURLProtocol setProperty:@(currentMovingAverageThroughput) forKey:kENHDataFetcherAverageThroughputKey inRequest:mutableRequest];
+        [NSURLProtocol setProperty:timestamp forKey:kENHDataFetcherLastTimestampKey inRequest:mutableRequest];
+    }
+    
+    if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:averageThroughput:userInfo:)])
     {
         NSDictionary *userInfo = [NSURLProtocol propertyForKey:kENHDataFetcherUserInfoKey
                                                      inRequest:downloadTask.originalRequest];
@@ -322,6 +363,7 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
                       didWriteData:bytesWritten
                  totalBytesWritten:totalBytesWritten
          totalBytesExpectedToWrite:totalBytesExpectedToWrite
+                 averageThroughput:currentAverageThroughput
                           userInfo:userInfo];
     }
 }
@@ -332,6 +374,12 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
 expectedTotalBytes:(int64_t)expectedTotalBytes
 {
     NSParameterAssert([self delegate]);
+    
+    if ([downloadTask.originalRequest isKindOfClass:NSMutableURLRequest.class])
+    {
+        NSMutableURLRequest *request = (NSMutableURLRequest *)[downloadTask originalRequest];
+        [NSURLProtocol setProperty:[NSDate date] forKey:kENHDataFetcherLastTimestampKey inRequest:request];
+    }
     
     if ([self.delegate respondsToSelector:@selector(dataFetcher:downloadTask:didResumeAtOffset:expectedTotalBytes:userInfo:)])
     {

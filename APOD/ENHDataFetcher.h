@@ -1,5 +1,5 @@
 //
-//  APODDataFetcher.h
+//  ENHDataFetcher.h
 //  APOD
 //
 //  Created by Dillan Laughlin on 10/8/15.
@@ -179,13 +179,15 @@ didCompleteWithError:(NSError *)error
  *  @param bytesWritten              The number of bytes most recently written.
  *  @param totalBytesWritten         The total number of bytes written.
  *  @param totalBytesExpectedToWrite The total number of bytes expected.
+ *  @param averageThroughput         The average throughput in bytes per second. Calculated as an exponential moving average when the downlaod task is backed with a `NSMutableURLRequest`. Otherwise the throughput is calculated as an average over the lifetime of the request.
  *  @param userInfo                  The user info dictionary with context data that was passed when the download was initiated.
  */
 - (void)dataFetcher:(ENHDataFetcher *)dataFetcher
-      downloadTask:(NSURLSessionDownloadTask *)downloadTask
-      didWriteData:(int64_t)bytesWritten
- totalBytesWritten:(int64_t)totalBytesWritten
+       downloadTask:(NSURLSessionDownloadTask *)downloadTask
+       didWriteData:(int64_t)bytesWritten
+  totalBytesWritten:(int64_t)totalBytesWritten
 totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+  averageThroughput:(int64_t)averageThroughput
            userInfo:(NSDictionary *)userInfo;
 
 /**
